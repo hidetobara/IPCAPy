@@ -1,22 +1,25 @@
 import numpy
 import os
+from PIL import Image
+
 
 class IncrementalPCA:
     Size = None
     Axis = 32
-    Amnesic = 0.2
+    Amnesic = 0.1
     _Main = None
     _Sub = None
+    _Length = None
     _Frame = 0
 
-    def __init__(self, size, axis, amnesic=0.2):
+    def __init__(self, size, axis, amnesic=0.1):
         self.Size = size
         self.Axis = axis
         self.Amnesic = amnesic
         self._Main = numpy.zeros((self.Axis, self.Size))
         self._Sub = numpy.zeros((self.Axis, self.Size))
 
-    def save(self, path):
+    def save(self, path, size=None):
         f = open(path + ".def", "w")
         f.write("axis=" + str(self.Axis) + "\n")
         f.write("size=" + str(self.Size) + "\n")
@@ -24,6 +27,22 @@ class IncrementalPCA:
         f.close()
         numpy.save(path + ".main.npy", self._Main)
         numpy.save(path + ".sub.npy", self._Sub)
+
+        if isinstance(size, tuple) and len(size) == 3:
+            for a in range(self.Axis):
+                low = min(self._Main[a])
+                high = max(self._Main[a])
+                diff = high - low
+                # print(low, high, limit, diff)
+                main = numpy.uint8( (self._Main[a]-low)*255.0/diff )
+                stride = size[1] * size[2]
+                img = Image.new("RGB", size[0:2])
+                for h in range(size[0]):
+                    for w in range(size[1]):
+                        index = stride * h + w * size[2]
+                        img.putpixel((w,h), tuple(main[index:index+3])) # first 3 columns only
+                name = "%02d" % a
+                img.save(path + "." + name + ".png")
 
     def load(self, path):
         if os.path.exists(path + ".def") is False: return
@@ -40,7 +59,12 @@ class IncrementalPCA:
         self._Sub = numpy.load(path + ".sub.npy")
         if self._Main.shape[0] != self.Axis or self._Main.shape[1] != self.Size:
             raise Exception("Axis, Size id different.")
-        print(self.Axis, self.Size, self._Frame)
+        self.prepare_length()
+
+    def prepare_length(self):
+        self._Length = []
+        for a in range(self.Axis):
+            self._Length.append(1.0/numpy.linalg.norm(self._Main[a]))
 
     def fit(self, row):
         self._Sub[0] = row
@@ -70,9 +94,11 @@ class IncrementalPCA:
 
             self._Sub[i+1] = self._Sub[i] - self._Main[i] * scalerC
 
-            if self._Frame % 1000 == 0:
-                print("\tframe=" + str(self._Frame))
+        if self._Frame % 1000 == 0:
+            print("\tframe=" + str(self._Frame))
         self._Frame += 1
 
     def transform(self, row):
-        return self._Main.dot(numpy.linalg.transpose(row))
+        if self._Length is None:
+            self.prepare_length()
+        return self._Main.dot(numpy.linalg.transpose(row)) * self._Length
