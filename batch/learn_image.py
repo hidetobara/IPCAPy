@@ -6,7 +6,7 @@ import glob
 import IncrementalPCA
 
 
-def run(ite=30):
+def run(ite=15):
     ipca = IncrementalPCA.IncrementalPCA(32*32*3, 16)
     ipca.load(define.get_data_path() + "cat.ipca")
 
@@ -29,5 +29,9 @@ def run(ite=30):
     restored = ipca.inv_transform(compress) * 255.0
     img = Image.fromarray(numpy.uint8(restored.reshape(32,32,3)))
     img.save(define.get_data_path() + "reflect.png")
+
+    # 基底の評価
+    evaluated = ipca.evaluate_basis()
+    print(evaluated)
 
 run()

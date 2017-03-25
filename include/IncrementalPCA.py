@@ -64,9 +64,8 @@ class IncrementalPCA:
         self._sub = numpy.load(path + ".sub.npy")
         if self._main.shape[0] != self.Axis or self._main.shape[1] != self.Size:
             raise Exception("Axis, Size id different.")
-        self.prepare_length()
 
-    def prepare_length(self):
+    def prepare_inv_length(self):
         if self._frame < self.Axis: return
         invs = []
         for a in range(self.Axis):
@@ -114,7 +113,7 @@ class IncrementalPCA:
         """
         row = row.reshape((self.Size, 1))
         if self._inv_length is None:
-            self.prepare_length()
+            self.prepare_inv_length()
         return self._main.dot(row) * self._inv_length
 
     def inv_transform(self, res):
@@ -124,11 +123,14 @@ class IncrementalPCA:
         :return: 大きさは(1,Size)
         """
         if self._inv_length is None:
-            self.prepare_length()
+            self.prepare_inv_length()
         res = res * self._inv_length
         return res.transpose().dot(self._main)
 
     def evaluate_outlier(self, row, is_refreshing=False):
+        """
+        与えられた要素がどれだけ、基底から外れているかを計算
+        """
         if self._frame < self.Axis: return None
         if is_refreshing: self._inv_length = None
 
@@ -136,3 +138,14 @@ class IncrementalPCA:
         compress = self.transform(row)
         restored = self.inv_transform(compress)
         return numpy.linalg.norm(row - restored) / self.Size
+
+    def evaluate_basis(self):
+        """
+        基底がどれだけ独立かを計算
+        """
+        self.prepare_inv_length()
+        values = []
+        for i in range(self.Axis):
+            for j in range(self.Axis):
+                values.append( self._main[i].dot(self._main[j]) * self._inv_length[i] * self._inv_length[j] )
+        return numpy.asarray(values, dtype=numpy.float64).reshape((self.Axis,self.Axis))
