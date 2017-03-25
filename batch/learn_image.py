@@ -7,7 +7,7 @@ import IncrementalPCA
 
 
 def run(ite=15):
-    ipca = IncrementalPCA.IncrementalPCA(32*32*3, 16)
+    ipca = IncrementalPCA.IncrementalPCA(16, 32*32*3)
     ipca.load(define.get_data_path() + "cat.ipca")
 
     for n in range(ite):

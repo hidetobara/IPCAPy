@@ -17,7 +17,7 @@ class IncrementalPCA:
     _inv_norm = None # (Size,1)
     _frame = 0
 
-    def __init__(self, length, axis, amnesic=0.1):
+    def __init__(self, axis, length, amnesic=0.1):
         self.Length = length
         self.Axis = axis
         self.Amnesic = amnesic
