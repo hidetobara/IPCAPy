@@ -4,9 +4,10 @@ from PIL import Image
 import numpy
 import glob
 import IncrementalPCA
+import IncrementalPCAConvolution
 
 
-def run(ite=15):
+def run_ipca(ite=15):
     ipca = IncrementalPCA.IncrementalPCA(16, 32*32*3)
     ipca.load(define.get_data_path() + "cat.ipca")
 
@@ -34,4 +35,19 @@ def run(ite=15):
     evaluated = ipca.evaluate_basis()
     print(evaluated)
 
-run()
+def run_cipca():
+    cipca = IncrementalPCAConvolution.IncrementalPCAConvolution(16, (32,32,3))
+    cipca.load(define.get_data_path() + "cat.cipca")
+
+    for path in glob.glob(define.get_data_path() + "cat/*.jpg"):
+        print("\t" + path)
+        img = Image.open(path)
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        img.thumbnail((64, 64), Image.ANTIALIAS)
+        array = numpy.asarray(img, dtype=numpy.float64) / 255.0
+        cipca.fit(array)
+    cipca.save(define.get_data_path() + "cat.cipca")
+    print(cipca._ipca.evaluate_basis())
+
+run_cipca()
