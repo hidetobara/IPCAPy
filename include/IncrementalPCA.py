@@ -104,6 +104,7 @@ class IncrementalPCA:
         if self._frame % 1000 == 0:
             print("\tframe=" + str(self._frame))
         self._frame += 1
+        self._inv_norm = None
 
     def transform(self, row):
         """
@@ -114,7 +115,7 @@ class IncrementalPCA:
         row = row.reshape((self.Length, 1))
         if self._inv_norm is None:
             self.prepare_inv_norm()
-        return self._main.dot(row) * self._inv_norm
+        return self._main.dot(row) * self._inv_norm * self._inv_norm
 
     def inv_transform(self, res):
         """
@@ -124,7 +125,7 @@ class IncrementalPCA:
         """
         if self._inv_norm is None:
             self.prepare_inv_norm()
-        res = res * self._inv_norm
+        #res = res * self._inv_norm
         return res.transpose().dot(self._main)
 
     def evaluate_outlier(self, row, is_refreshing=False):
