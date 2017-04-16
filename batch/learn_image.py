@@ -36,31 +36,60 @@ def run_ipca(ite=5):
     evaluated = ipca.evaluate_basis()
     print(evaluated)
 
+def load_image64(path):
+    img = Image.open(path)
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.thumbnail((64, 64), Image.ANTIALIAS)
+    array = numpy.asarray(img, dtype=numpy.float64) / 255.0
+    return array
+
 def run_cipca():
-    cipca = IncrementalPCAConvolution.IncrementalPCAConvolution(32, (16,16,3))
-    cipca.load(define.get_data_path() + "cat.cipca")
+    cipca1 = IncrementalPCAConvolution.IncrementalPCAConvolution(16, (16,16,3))
+    cipca1.load(define.get_data_path() + "cat.cipca1")
+    cipca2 = IncrementalPCAConvolution.IncrementalPCAConvolution(32, (16,16,16))
+    cipca2.load(define.get_data_path() + "cat.cipca2")
+    cipca3 = IncrementalPCAConvolution.IncrementalPCAConvolution(64, (8,8,32))
+    cipca3.load(define.get_data_path() + "cat.cipca3")
 
+    images = []
+    print("1.")
     for path in glob.glob(define.get_data_path() + "cat/*.jpg"):
-        print("\t" + path)
-        filename = os.path.basename(path)
-        img = Image.open(path)
-        if img.mode != "RGB":
-            img = img.convert("RGB")
-        img.thumbnail((64, 64), Image.ANTIALIAS)
-        array = numpy.asarray(img, dtype=numpy.float64) / 255.0
-        cipca.fit(array)
-        continue
+        images.append(load_image64(path))
 
-        # 強い成分を保存
-        compress = cipca.transform(array)
-        shape = compress.shape
-        #print(shape, compress[1,1])
-        tmp = numpy.argmax(compress.reshape((shape[0]*shape[1],shape[2])), axis=1)
-        tmp = numpy.uint8(tmp.reshape(shape[0], shape[1])*8)
+    print("2.")
+    for image in images:
+        cipca1.fit(image)
+    cipca1.save(define.get_data_path() + "cat.cipca1")
+    print("3.")
+    transformed = []
+    for image in images:
+        transformed.append(cipca1.transform(image))
+    images = transformed
+
+    print("4.")
+    for image in images:
+        cipca2.fit(image)
+    cipca2.save(define.get_data_path() + "cat.cipca2")
+    print("5.")
+    transformed = []
+    for image in images:
+        transformed.append(cipca2.transform(image))
+    images = transformed
+
+    print("6.")
+    for image in images:
+        cipca3.fit(image)
+    print("7.")
+    for n,image in enumerate(images):
+        t = cipca3.transform(image)
+        shape = t.shape
+        #print(shape, t[1,1])
+        tmp = numpy.argmax(t.reshape((shape[0]*shape[1],shape[2])), axis=1)
+        tmp = numpy.uint8(tmp.reshape(shape[0], shape[1])*4)
         #print(tmp.shape, tmp[1,1])
         img = Image.fromarray(tmp, mode="L")
-        img.save(define.get_data_path() + "cmp." + filename + ".png")
-    cipca.save(define.get_data_path() + "cat.cipca")
-    print(cipca._ipca.evaluate_basis())
+        img.save(define.get_data_path() + "cmp." + str(n) + ".png")
+    cipca3.save(define.get_data_path() + "cat.cipca3")
 
 run_cipca()
