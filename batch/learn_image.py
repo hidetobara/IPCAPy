@@ -36,13 +36,19 @@ def run_ipca(ite=5):
     evaluated = ipca.evaluate_basis()
     print(evaluated)
 
-def load_image64(path):
+def load_image(path):
     img = Image.open(path)
     if img.mode != "RGB":
         img = img.convert("RGB")
-    img.thumbnail((64, 64), Image.ANTIALIAS)
+    size = define.get_block_size()
+    img.thumbnail((size,size), Image.ANTIALIAS)
     array = numpy.asarray(img, dtype=numpy.float64) / 255.0
     return array
+
+def save_image(path, image):
+    size = define.get_block_size()
+    img = Image.fromarray(numpy.uint8(image.reshape(size,size,3) * 255.0))
+    img.save(path)
 
 def run_cipca():
     cipca1 = IncrementalPCAConvolution.IncrementalPCAConvolution(16, (16,16,3))
@@ -54,8 +60,10 @@ def run_cipca():
 
     images = []
     print("1.")
-    for path in glob.glob(define.get_data_path() + "cat/*.jpg"):
-        images.append(load_image64(path))
+    for n,path in enumerate(glob.glob(define.get_data_path() + "cat/*.jpg")):
+        image = load_image(path)
+        save_image(define.get_data_path() + "org-" + str(n) + ".png", image)
+        images.append(image)
 
     print("2.")
     for image in images:
@@ -89,7 +97,7 @@ def run_cipca():
         tmp = numpy.uint8(tmp.reshape(shape[0], shape[1])*4)
         #print(tmp.shape, tmp[1,1])
         img = Image.fromarray(tmp, mode="L")
-        img.save(define.get_data_path() + "cmp." + str(n) + ".png")
+        img.save(define.get_data_path() + "gen-" + str(n) + ".png")
     cipca3.save(define.get_data_path() + "cat.cipca3")
 
 run_cipca()
