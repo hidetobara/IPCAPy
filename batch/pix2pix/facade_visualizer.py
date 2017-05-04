@@ -16,9 +16,9 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         n_images = rows * cols
         xp = enc.xp
         
-        w_in = 256
-        w_out = 256
-        in_ch = 12
+        w_in = 128
+        w_out = 128
+        in_ch = 64
         out_ch = 3
         
         in_all = np.zeros((n_images, in_ch, w_in, w_in)).astype("i")
@@ -66,8 +66,8 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         
         x = np.ones((n_images, 3, w_in, w_in)).astype(np.uint8)*255
         x[:,0,:,:] = 0
-        for i in range(12):
-            x[:,0,:,:] += np.uint8(15*i*in_all[:,i,:,:])
+        for i in range(64):
+            x[:,0,:,:] += np.uint8(4*i*in_all[:,i,:,:])
         save_image(x, "in", mode='HSV')
         
         x = np.asarray(np.clip(gt_all * 128+128, 0.0, 255.0), dtype=np.uint8)

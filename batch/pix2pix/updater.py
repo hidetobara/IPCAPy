@@ -61,7 +61,7 @@ class FacadeUpdater(chainer.training.StandardUpdater):
         out_ch = batch[0][1].shape[0]
         w_in = 128
         w_out = 128
-        print(batch[0][0].shape, batch[0][1].shape)
+        #print(batch[0][0].shape, batch[0][1].shape)
         
         x_in = xp.zeros((batchsize, in_ch, w_in, w_in)).astype("f")
         t_out = xp.zeros((batchsize, out_ch, w_out, w_out)).astype("f")
@@ -71,7 +71,7 @@ class FacadeUpdater(chainer.training.StandardUpdater):
             t_out[i,:] = xp.asarray(batch[i][1])
         x_in = Variable(x_in)
 
-        print(x_in.shape)
+        #print(x_in.shape)
         z = enc(x_in, test=False)
         x_out = dec(z, test=False)
 

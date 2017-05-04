@@ -46,7 +46,6 @@ class FacadeDataset(dataset_mixin.DatasetMixin):
 
     # return (label, img)
     def get_example(self, i, crop_width=128):
-        print(i, crop_width, self.dataset[i][0].shape)
         _,h,w = self.dataset[i][0].shape
         x_l = np.random.randint(0,w-crop_width)
         x_r = x_l+crop_width
@@ -71,9 +70,9 @@ class DecompDataset(FacadeDataset):
             label = label.resize((int(r * w), int(r * h)), Image.NEAREST)
 
             img = np.asarray(img).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
-            label_ = np.asarray(label) - 1  # [0, 12)
-            label = np.zeros((32, img.shape[1], img.shape[2])).astype("i")
-            for j in range(32):
+            label_ = np.asarray(label) / 4
+            label = np.zeros((64, img.shape[1], img.shape[2])).astype("i")
+            for j in range(64):
                 label[j, :] = label_ == j
             self.dataset.append((img, label))
         print("load dataset done", img.shape, label.shape)

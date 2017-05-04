@@ -101,7 +101,7 @@ class IncrementalPCA:
 
             self._sub[i + 1] = self._sub[i] - self._main[i] * scalerC
 
-        if self._frame > 0 and self._frame % 1000 == 0:
+        if self._frame > 0 and self._frame % 10000 == 0:
             print("\tframe=" + str(self._frame))
         self._frame += 1
         self._inv_norm = None

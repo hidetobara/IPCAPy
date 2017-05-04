@@ -3,7 +3,9 @@ import os
 
 
 def get_root_path():
-    cells = os.path.abspath(os.path.dirname(__file__)).split("\\")
+    spliter = "/"
+    if os.name == "nt": spliter = "\\"
+    cells = os.path.abspath(os.path.dirname(__file__)).split(spliter)
     cells.pop()
     return "/".join(cells)
 
