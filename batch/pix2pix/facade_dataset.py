@@ -1,5 +1,6 @@
 import os
 
+import define
 import numpy
 from PIL import Image
 import six
@@ -60,19 +61,19 @@ class DecompDataset(FacadeDataset):
         print("    range: [%d, %d)" % (data_range[0], data_range[1]))
         self.dataDir = dataDir
         self.dataset = []
+        in_ch = define.get_in_ch()
         for i in range(data_range[0], data_range[1]):
             img = Image.open(dataDir + "/org-%d.png" % i)
             label = Image.open(dataDir + "/gen-%d.png" % i)
             w, h = img.size
             r = 196 / min(w, h)
-            # resize images so that min(w, h) == 286
             img = img.resize((int(r * w), int(r * h)), Image.BILINEAR)
             label = label.resize((int(r * w), int(r * h)), Image.NEAREST)
 
             img = np.asarray(img).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
-            label_ = np.asarray(label) / 4
-            label = np.zeros((64, img.shape[1], img.shape[2])).astype("i")
-            for j in range(64):
+            label_ = np.asarray(label) / (256/in_ch)
+            label = np.zeros((in_ch, img.shape[1], img.shape[2])).astype("i")
+            for j in range(in_ch):
                 label[j, :] = label_ == j
             self.dataset.append((img, label))
         print("load dataset done", img.shape, label.shape)

@@ -24,9 +24,9 @@ from facade_visualizer import out_image
 
 def main():
     parser = argparse.ArgumentParser(description='chainer implementation of pix2pix')
-    parser.add_argument('--batchsize', '-b', type=int, default=2,
+    parser.add_argument('--batchsize', '-b', type=int, default=1,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=50,
+    parser.add_argument('--epoch', '-e', type=int, default=1000,
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--gpu', '-g', type=int, default=-1,
                         help='GPU ID (negative value indicates CPU)')
@@ -38,7 +38,7 @@ def main():
                         help='Resume the training from snapshot')
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed')
-    parser.add_argument('--snapshot_interval', type=int, default=300,
+    parser.add_argument('--snapshot_interval', type=int, default=1000,
                         help='Interval of snapshot')
     parser.add_argument('--display_interval', type=int, default=100,
                         help='Interval of displaying log to console')
@@ -50,9 +50,9 @@ def main():
     print('')
 
     # Set up a neural network to train
-    enc = Encoder(in_ch=64)
+    enc = Encoder(in_ch=define.get_in_ch())
     dec = Decoder(out_ch=3)
-    dis = Discriminator(in_ch=64, out_ch=3)
+    dis = Discriminator(in_ch=define.get_in_ch(), out_ch=3)
     
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
@@ -91,15 +91,10 @@ def main():
 
     snapshot_interval = (args.snapshot_interval, 'iteration')
     display_interval = (args.display_interval, 'iteration')
-    trainer.extend(extensions.snapshot(
-        filename='snapshot_iter_{.updater.iteration}.npz'),
-                   trigger=snapshot_interval)
-    trainer.extend(extensions.snapshot_object(
-        enc, 'enc_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
-    trainer.extend(extensions.snapshot_object(
-        dec, 'dec_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
-    trainer.extend(extensions.snapshot_object(
-        dis, 'dis_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
+    trainer.extend(extensions.snapshot(filename='snapshot_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
+    #trainer.extend(extensions.snapshot_object(enc, 'enc_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
+    #trainer.extend(extensions.snapshot_object(dec, 'dec_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
+    #trainer.extend(extensions.snapshot_object(dis, 'dis_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
     trainer.extend(extensions.LogReport(trigger=display_interval))
     trainer.extend(extensions.PrintReport([
         'epoch', 'iteration', 'enc/loss', 'dec/loss', 'dis/loss',
@@ -116,7 +111,12 @@ def main():
         chainer.serializers.load_npz(args.resume, trainer)
 
     # Run the training
-    trainer.run()
+    #trainer.run()
+    #chainer.serializers.save_npz("/home/baraoto/IPCAPy/data/pix2pix-cat.npz", trainer)
+
+    srcs = ["/home/baraoto/IPCAPy/data/layer3/" + "gen-%d.png" % (i) for i in range(50,54)]
+    updater.generate(srcs, "/home/baraoto/IPCAPy/data/out/")
+
 
 if __name__ == '__main__':
     main()

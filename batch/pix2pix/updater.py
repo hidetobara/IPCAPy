@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 
+import define
+import os
 import chainer
 import chainer.functions as F
 from chainer import Variable
@@ -19,7 +21,6 @@ class FacadeUpdater(chainer.training.StandardUpdater):
     def __init__(self, *args, **kwargs):
         self.enc, self.dec, self.dis = kwargs.pop('models')
         super(FacadeUpdater, self).__init__(*args, **kwargs)
-
 
     def loss_enc(self, enc, x_out, t_out, y_out, lam1=100, lam2=1):
         batchsize,_,w,h = y_out.data.shape
@@ -86,3 +87,39 @@ class FacadeUpdater(chainer.training.StandardUpdater):
         x_in.unchain_backward()
         x_out.unchain_backward()
         dis_optimizer.update(self.loss_dis, dis, y_real, y_fake)
+
+    def generate(self, paths, dir):
+        enc, dec = self.enc, self.dec
+        xp = enc.xp
+        in_ch = define.get_in_ch()
+        w_in = 128
+        w_out = 128
+
+        x_in = xp.zeros((len(paths), in_ch, w_in, w_in)).astype("f")
+        for i,path in enumerate(paths):
+            print("load=" + path)
+            label = Image.open(path)
+            w, h = label.size
+            r = 128 / min(w, h)
+            label = label.resize((int(r * w), int(r * h)), Image.NEAREST)
+
+            label_ = np.asarray(label) / (256/in_ch)
+            label = np.zeros((in_ch, label.size[0], label.size[1])).astype("i")
+            for j in range(in_ch):
+                label[j, :] = label_ == j
+            x_in[i,:] = xp.asarray(label)
+
+        x_in = Variable(x_in)
+        z = enc(x_in, test=False)
+        x_out = dec(z, test=False)
+
+        for i,path in enumerate(paths):
+            o = chainer.cuda.to_cpu(x_out[i].data)
+            o = np.asarray(np.clip(o * 128 + 128, 0.0, 255.0), dtype=np.uint8).transpose((1,2,0)).reshape((w_out,w_out,3))
+            filename = os.path.basename(path)
+            genpath = dir + "/" + filename
+            Image.fromarray(o).convert('RGB').save(genpath)
+
+
+
+

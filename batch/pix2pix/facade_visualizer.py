@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import define
 import os
 
 import numpy as np
@@ -18,7 +19,7 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         
         w_in = 128
         w_out = 128
-        in_ch = 64
+        in_ch = define.get_in_ch()
         out_ch = 3
         
         in_all = np.zeros((n_images, in_ch, w_in, w_in)).astype("i")
@@ -66,7 +67,7 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         
         x = np.ones((n_images, 3, w_in, w_in)).astype(np.uint8)*255
         x[:,0,:,:] = 0
-        for i in range(64):
+        for i in range(in_ch):
             x[:,0,:,:] += np.uint8(4*i*in_all[:,i,:,:])
         save_image(x, "in", mode='HSV')
         
