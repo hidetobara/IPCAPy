@@ -63,15 +63,15 @@ class DecompDataset(FacadeDataset):
         self.dataset = []
         in_ch = define.get_in_ch()
         for i in range(data_range[0], data_range[1]):
-            img = Image.open(dataDir + "/org-%d.png" % i)
-            label = Image.open(dataDir + "/gen-%d.png" % i)
+            img = Image.open(dataDir + "/%d-org.png" % i)
+            label = Image.open(dataDir + "/%d-abs.png" % i)
             w, h = img.size
-            r = 196 / min(w, h)
+            r = 256 / min(w, h)
             img = img.resize((int(r * w), int(r * h)), Image.BILINEAR)
             label = label.resize((int(r * w), int(r * h)), Image.NEAREST)
 
             img = np.asarray(img).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
-            label_ = np.asarray(label) / (256/in_ch)
+            label_ = np.asarray(label) / int(256/in_ch)
             label = np.zeros((in_ch, img.shape[1], img.shape[2])).astype("i")
             for j in range(in_ch):
                 label[j, :] = label_ == j

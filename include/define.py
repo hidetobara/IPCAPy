@@ -2,7 +2,12 @@ import os
 import sys
 
 def get_in_ch():
-    return 64
+    return 24 # layer1
+    #return 64 # layer3
+
+def get_conv_size():
+    if os.name == "nt": return 64 # windowsの場合は開発
+    return 128 # その他は本番
 
 def get_block_size():
     if os.name == "nt": return 64 # windowsの場合は開発

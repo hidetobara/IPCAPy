@@ -40,17 +40,42 @@ def load_image(path):
     img = Image.open(path)
     if img.mode != "RGB":
         img = img.convert("RGB")
-    size = define.get_block_size()
+    size = define.get_conv_size()
     img.thumbnail((size,size), Image.ANTIALIAS)
     array = numpy.asarray(img, dtype=numpy.float64) / 255.0
     return array
 
 def save_image(path, image):
-    size = define.get_block_size()
+    size = define.get_conv_size()
     img = Image.fromarray(numpy.uint8(image.reshape(size,size,3) * 255.0))
     img.save(path)
 
-def run_cipca():
+def run_cipca1():
+    cipca1 = IncrementalPCAConvolution.IncrementalPCAConvolution(24, (16,16,3))
+    cipca1.load(define.get_data_path() + "cat.cipca1")
+
+    images = []
+    print("1-1.")
+    for n,path in enumerate(glob.glob(define.get_data_path() + "cat/*.jpg")):
+        image = load_image(path)
+        save_image(define.get_data_path() + str(n) + "-org.png", image)
+        images.append(image)
+    print("1-2.")
+    for image in images:
+        cipca1.fit(image)
+    print("1-3.")
+    for n,image in enumerate(images):
+        t = cipca1.transform(image)
+        shape = t.shape
+        #print(shape, t[1,1])
+        tmp = numpy.argmax(t.reshape((shape[0]*shape[1],shape[2])), axis=1)
+        tmp = numpy.uint8(tmp.reshape(shape[0], shape[1])*10)
+        #print(tmp.shape, tmp[1,1])
+        img = Image.fromarray(tmp, mode="L")
+        img.save(define.get_data_path() + str(n) + "-abs.png")
+    cipca1.save(define.get_data_path() + "cat.cipca1")
+
+def run_cipca3():
     cipca1 = IncrementalPCAConvolution.IncrementalPCAConvolution(16, (16,16,3))
     cipca1.load(define.get_data_path() + "cat.cipca1")
     cipca2 = IncrementalPCAConvolution.IncrementalPCAConvolution(32, (16,16,16))
@@ -59,36 +84,36 @@ def run_cipca():
     cipca3.load(define.get_data_path() + "cat.cipca3")
 
     images = []
-    print("1.")
+    print("3-1.")
     for n,path in enumerate(glob.glob(define.get_data_path() + "cat/*.jpg")):
         image = load_image(path)
         save_image(define.get_data_path() + "org-" + str(n) + ".png", image)
         images.append(image)
 
-    print("2.")
+    print("3-2.")
     for image in images:
         cipca1.fit(image)
     cipca1.save(define.get_data_path() + "cat.cipca1")
-    print("3.")
+    print("3-3.")
     transformed = []
     for image in images:
         transformed.append(cipca1.transform(image))
     images = transformed
 
-    print("4.")
+    print("3-4.")
     for image in images:
         cipca2.fit(image)
     cipca2.save(define.get_data_path() + "cat.cipca2")
-    print("5.")
+    print("3-5.")
     transformed = []
     for image in images:
         transformed.append(cipca2.transform(image))
     images = transformed
 
-    print("6.")
+    print("3-6.")
     for image in images:
         cipca3.fit(image)
-    print("7.")
+    print("3-7.")
     for n,image in enumerate(images):
         t = cipca3.transform(image)
         shape = t.shape
@@ -100,4 +125,4 @@ def run_cipca():
         img.save(define.get_data_path() + "gen-" + str(n) + ".png")
     cipca3.save(define.get_data_path() + "cat.cipca3")
 
-run_cipca()
+run_cipca1()

@@ -65,11 +65,11 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         x = np.asarray(np.clip(gen_all * 128 + 128, 0.0, 255.0), dtype=np.uint8)
         save_image(x, "gen")
         
-        x = np.ones((n_images, 3, w_in, w_in)).astype(np.uint8)*255
-        x[:,0,:,:] = 0
-        for i in range(in_ch):
-            x[:,0,:,:] += np.uint8(4*i*in_all[:,i,:,:])
-        save_image(x, "in", mode='HSV')
+        #x = np.ones((n_images, 3, w_in, w_in)).astype(np.uint8)*255
+        #x[:,0,:,:] = 0
+        #for i in range(in_ch):
+        #    x[:,0,:,:] += np.uint8((256/in_ch)*i*in_all[:,i,:,:])
+        #save_image(x, "in", mode='HSV')
         
         x = np.asarray(np.clip(gt_all * 128+128, 0.0, 255.0), dtype=np.uint8)
         save_image(x, "gt")
