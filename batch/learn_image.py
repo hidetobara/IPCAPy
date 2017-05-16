@@ -40,13 +40,13 @@ def load_image(path):
     img = Image.open(path)
     if img.mode != "RGB":
         img = img.convert("RGB")
-    size = define.get_conv_size()
+    size = define.get_pca_size()
     img.thumbnail((size,size), Image.ANTIALIAS)
     array = numpy.asarray(img, dtype=numpy.float64) / 255.0
     return array
 
 def save_image(path, image):
-    size = define.get_conv_size()
+    size = define.get_pca_size()
     img = Image.fromarray(numpy.uint8(image.reshape(size,size,3) * 255.0))
     img.save(path)
 
@@ -56,7 +56,7 @@ def run_cipca1():
 
     images = []
     print("1-1.")
-    for n,path in enumerate(glob.glob(define.get_data_path() + "cat/*.jpg")):
+    for n,path in enumerate(glob.glob(define.get_data_path() + "test/*.jpg")):
         image = load_image(path)
         save_image(define.get_data_path() + str(n) + "-org.png", image)
         images.append(image)

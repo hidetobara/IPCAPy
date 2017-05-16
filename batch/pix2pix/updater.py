@@ -60,8 +60,8 @@ class FacadeUpdater(chainer.training.StandardUpdater):
         batchsize = len(batch)
         in_ch = batch[0][0].shape[0]
         out_ch = batch[0][1].shape[0]
-        w_in = 128
-        w_out = 128
+        w_in = define.get_nn_size()
+        w_out = define.get_nn_size()
         #print(batch[0][0].shape, batch[0][1].shape)
         
         x_in = xp.zeros((batchsize, in_ch, w_in, w_in)).astype("f")
@@ -89,18 +89,22 @@ class FacadeUpdater(chainer.training.StandardUpdater):
         dis_optimizer.update(self.loss_dis, dis, y_real, y_fake)
 
     def generate(self, paths, dir):
+        for i in range(0, len(paths), 8):
+            self.generate_parts(paths[i:i+8], dir)
+
+    def generate_parts(self, parts, dir):
         enc, dec = self.enc, self.dec
         xp = enc.xp
         in_ch = define.get_in_ch()
-        w_in = 128
-        w_out = 128
+        w_in = define.get_nn_size()
+        w_out = define.get_nn_size()
 
-        x_in = xp.zeros((len(paths), in_ch, w_in, w_in)).astype("f")
-        for i,path in enumerate(paths):
+        x_in = xp.zeros((len(parts), in_ch, w_in, w_in)).astype("f")
+        for i,path in enumerate(parts):
             print("load=" + path)
             label = Image.open(path)
             w, h = label.size
-            r = 128 / min(w, h)
+            r = define.get_nn_size() / min(w, h)
             label = label.resize((int(r * w), int(r * h)), Image.NEAREST)
 
             label_ = np.asarray(label) / (256/in_ch)
@@ -113,7 +117,7 @@ class FacadeUpdater(chainer.training.StandardUpdater):
         z = enc(x_in, test=False)
         x_out = dec(z, test=False)
 
-        for i,path in enumerate(paths):
+        for i,path in enumerate(parts):
             o = chainer.cuda.to_cpu(x_out[i].data)
             o = np.asarray(np.clip(o * 128 + 128, 0.0, 255.0), dtype=np.uint8).transpose((1,2,0)).reshape((w_out,w_out,3))
             filename = os.path.basename(path)

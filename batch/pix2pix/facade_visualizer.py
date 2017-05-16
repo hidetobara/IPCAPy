@@ -17,8 +17,8 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         n_images = rows * cols
         xp = enc.xp
         
-        w_in = 128
-        w_out = 128
+        w_in = define.get_nn_size()
+        w_out = define.get_nn_size()
         in_ch = define.get_in_ch()
         out_ch = 3
         

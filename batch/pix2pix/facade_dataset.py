@@ -46,7 +46,8 @@ class FacadeDataset(dataset_mixin.DatasetMixin):
         return len(self.dataset)
 
     # return (label, img)
-    def get_example(self, i, crop_width=128):
+    def get_example(self, i):
+        crop_width = define.get_nn_size()
         _,h,w = self.dataset[i][0].shape
         x_l = np.random.randint(0,w-crop_width)
         x_r = x_l+crop_width
@@ -55,25 +56,30 @@ class FacadeDataset(dataset_mixin.DatasetMixin):
         return self.dataset[i][1][:,y_l:y_r,x_l:x_r], self.dataset[i][0][:,y_l:y_r,x_l:x_r]
     
 class DecompDataset(FacadeDataset):
-    def __init__(self, dataDir='./', data_range=(1, 300)):
+    def __init__(self, dataDir='./', data_range=(1, 300), shift=1000):
         print("load dataset start")
-        print("    from: %s" % dataDir)
-        print("    range: [%d, %d)" % (data_range[0], data_range[1]))
         self.dataDir = dataDir
         self.dataset = []
-        in_ch = define.get_in_ch()
         for i in range(data_range[0], data_range[1]):
             img = Image.open(dataDir + "/%d-org.png" % i)
-            label = Image.open(dataDir + "/%d-abs.png" % i)
-            w, h = img.size
-            r = 256 / min(w, h)
-            img = img.resize((int(r * w), int(r * h)), Image.BILINEAR)
-            label = label.resize((int(r * w), int(r * h)), Image.NEAREST)
+            lbl = Image.open(dataDir + "/%d-abs.png" % i)
+            size = min(img.size.width, img.size.height)
+            while size > 128:
+                self.append(img, lbl, size)
+                size -= shift
+                shift = shift * 2
+        print("load dataset done", len(self.dataset), self.dataset[0][0].shape)
 
-            img = np.asarray(img).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
-            label_ = np.asarray(label) / int(256/in_ch)
-            label = np.zeros((in_ch, img.shape[1], img.shape[2])).astype("i")
-            for j in range(in_ch):
-                label[j, :] = label_ == j
-            self.dataset.append((img, label))
-        print("load dataset done", img.shape, label.shape)
+    def append(self, image, label, size):
+        in_ch = define.get_in_ch()
+        w, h = image.size
+        r = size / min(w, h)
+        i = image.resize((int(r * w), int(r * h)), Image.BILINEAR)
+        l = label.resize((int(r * w), int(r * h)), Image.NEAREST)
+
+        i = np.asarray(i).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
+        l = np.asarray(l) / int(256 / in_ch)
+        lc = np.zeros((in_ch, i.shape[1], i.shape[2])).astype("i")
+        for j in range(in_ch):
+            lc[j, :] = l == j
+        self.dataset.append((i, lc))

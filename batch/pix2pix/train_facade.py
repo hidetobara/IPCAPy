@@ -31,7 +31,7 @@ def main():
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--gpu', '-g', type=int, default=-1,
                         help='GPU ID (negative value indicates CPU)')
-    parser.add_argument('--dataset', '-i', default=define.get_data_path()+'layer1/',
+    parser.add_argument('--dataset', '-i', default=define.get_data_path()+'training/',
                         help='Directory of image files.')
     parser.add_argument('--out', '-o', default='../../result',
                         help='Directory to output the result')
@@ -39,9 +39,9 @@ def main():
                         help='Resume the training from snapshot')
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed')
-    parser.add_argument('--snapshot_interval', type=int, default=1000,
+    parser.add_argument('--snapshot_interval', type=int, default=5000,
                         help='Interval of snapshot')
-    parser.add_argument('--display_interval', type=int, default=100,
+    parser.add_argument('--display_interval', type=int, default=1000,
                         help='Interval of displaying log to console')
     args = parser.parse_args()
 
@@ -71,8 +71,8 @@ def main():
     opt_dec = make_optimizer(dec)
     opt_dis = make_optimizer(dis)
 
-    train_d = facade_dataset.DecompDataset(args.dataset, data_range=(0,60))
-    test_d = facade_dataset.DecompDataset(args.dataset, data_range=(50,60))
+    train_d = facade_dataset.DecompDataset(args.dataset, data_range=(0,300))
+    test_d = facade_dataset.DecompDataset(args.dataset, data_range=(275,300))
     #train_iter = chainer.iterators.MultiprocessIterator(train_d, args.batchsize, n_processes=4)
     #test_iter = chainer.iterators.MultiprocessIterator(test_d, args.batchsize, n_processes=4)
     train_iter = chainer.iterators.SerialIterator(train_d, args.batchsize)
@@ -113,9 +113,9 @@ def main():
 
     # Run the training
     trainer.run()
-    chainer.serializers.save_npz("/home/baraoto/IPCAPy/data/pix2pix-layer1.npz", trainer)
+    chainer.serializers.save_npz("/home/baraoto/IPCAPy/data/pix2pix-porn-edge.npz", trainer)
 
-    srcs = [path for path in glob.glob(define.get_data_path() + "in/*.png")]
+    srcs = [path for path in glob.glob(define.get_data_path() + "test/*abs.png")]
     #srcs = ["/home/baraoto/IPCAPy/data/layer3/" + "gen-%d.png" % (i) for i in range(50,54)]
     #updater.generate(srcs, "/home/baraoto/IPCAPy/data/out/")
 
